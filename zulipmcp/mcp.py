@@ -985,6 +985,69 @@ def verify_message(message_id: int) -> str:
 # ============================================================================
 
 @mcp.tool()
+def get_my_status() -> str:
+    """Get the custom status for the currently authenticated Zulip user."""
+    result = zulip_core.get_own_status()
+
+    if result.get("result") != "success":
+        return f"Error getting status: {result.get('msg', 'Unknown error')}"
+
+    status = result.get("status") or {}
+    if not status:
+        return "No custom status is currently set."
+
+    parts = []
+    if status.get("status_text"):
+        parts.append(f"Status: {status['status_text']}")
+    if status.get("emoji_name"):
+        parts.append(f"Emoji: :{status['emoji_name']}:")
+
+    return "\n".join(parts) if parts else "No custom status is currently set."
+
+
+@mcp.tool()
+def set_my_status(
+    status_text: str,
+    emoji_name: Optional[str] = None,
+    emoji_code: Optional[str] = None,
+    reaction_type: Optional[str] = None,
+) -> str:
+    """Set the custom status for the currently authenticated Zulip user.
+
+    Args:
+        status_text: Status text, up to 60 Unicode code points.
+        emoji_name: Optional Zulip emoji name. Omit to preserve current emoji.
+        emoji_code: Optional emoji code associated with emoji_name.
+        reaction_type: Optional emoji type, such as unicode_emoji or realm_emoji.
+    """
+    if len(status_text) > 60:
+        return "Error: Zulip status text cannot exceed 60 Unicode code points."
+
+    result = zulip_core.update_own_status(
+        status_text=status_text,
+        emoji_name=emoji_name,
+        emoji_code=emoji_code,
+        reaction_type=reaction_type,
+    )
+
+    if result.get("result") != "success":
+        return f"Error setting status: {result.get('msg', 'Unknown error')}"
+
+    return f"Status updated: {status_text}"
+
+
+@mcp.tool()
+def clear_my_status() -> str:
+    """Clear the custom status text and emoji for the authenticated Zulip user."""
+    result = zulip_core.clear_own_status()
+
+    if result.get("result") != "success":
+        return f"Error clearing status: {result.get('msg', 'Unknown error')}"
+
+    return "Custom status cleared."
+
+
+@mcp.tool()
 def send_message(stream: str, topic: str, content: str) -> str:
     """Send a message to a specific stream and topic (fire-and-forget).
 

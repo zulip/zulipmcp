@@ -867,6 +867,65 @@ def get_profile() -> dict:
     return get_client().get_profile()
 
 
+def get_own_status() -> dict:
+    """Get the status of the currently authenticated Zulip user."""
+    client = get_client()
+    profile = client.get_profile()
+    if profile.get("result") != "success":
+        return profile
+
+    user_id = profile.get("user_id")
+    if user_id is None:
+        return {
+            "result": "error",
+            "msg": "Authenticated Zulip profile did not include user_id",
+        }
+
+    return client.call_endpoint(
+        url=f"/users/{user_id}/status",
+        method="GET",
+    )
+
+
+def update_own_status(
+    status_text: str,
+    emoji_name: Optional[str] = None,
+    emoji_code: Optional[str] = None,
+    reaction_type: Optional[str] = None,
+) -> dict:
+    """Update the status of the currently authenticated Zulip user.
+
+    Optional emoji fields are omitted when None, preserving the existing
+    status emoji. Passing empty strings explicitly clears those fields.
+    """
+    request: dict[str, object] = {
+        "status_text": status_text,
+    }
+
+    if emoji_name is not None:
+        request["emoji_name"] = emoji_name
+    if emoji_code is not None:
+        request["emoji_code"] = emoji_code
+    if reaction_type is not None:
+        request["reaction_type"] = reaction_type
+
+    return get_client().call_endpoint(
+        url="/users/me/status",
+        method="POST",
+        request=request,
+    )
+
+
+def clear_own_status() -> dict:
+    """Clear both status text and status emoji for the authenticated user."""
+    return update_own_status(
+        status_text="",
+        emoji_name="",
+        emoji_code="",
+        reaction_type="unicode_emoji",
+    )
+
+
 def list_streams(include_private: bool = False) -> list[dict]:
     """List available streams. Returns list of stream dicts."""
     result = get_client().get_streams(include_public=True, include_subscribed=True)
