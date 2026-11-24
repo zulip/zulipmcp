@@ -183,6 +183,7 @@ def test_mention_activates_topic_and_followups_do_not_need_mention() -> None:
         "continue with the install",
     ]
     assert adapter.handled[0].source.thread_id == adapter.handled[1].source.thread_id
+    assert all(event.metadata == {} for event in adapter.handled)
     assert adapter._stream_ids_by_name == {"agents": 7}
 
 
@@ -246,6 +247,7 @@ def test_dm_does_not_require_mention() -> None:
 
     assert len(adapter.handled) == 1
     assert adapter.handled[0].source.chat_type == "dm"
+    assert adapter.handled[0].metadata == {}
     assert zulip_adapter._dm_recipients(adapter.handled[0].source.chat_id) == [
         "john@example.com"
     ]
