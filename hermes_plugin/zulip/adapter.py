@@ -494,11 +494,6 @@ class ZulipAdapter(BasePlatformAdapter):
             raw_message=event,
             message_id=str(message.get("id") or "") or None,
             channel_context=channel_context,
-            metadata={
-                "zulip_stream": stream or None,
-                "zulip_topic": topic or None,
-                "zulip_sender_email": message.get("sender_email"),
-            },
         )
         await self.handle_message(message_event)
 
